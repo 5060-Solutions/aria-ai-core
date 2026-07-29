@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # The light job: everything that does not need a C++ toolchain.
+  #
+  # `.cargo/config.toml` already denies warnings and turns on clippy's pedantic
+  # and nursery groups, so no extra -D flags are needed here.
+  check:
+    name: Lint & test (${{ matrix.features }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each of these is a configuration someone actually builds. A default-only
+        # job cannot see a module that is missing behind a feature flag — which is
+        # exactly how every non-default feature once became a hard compile error
+        # while CI stayed green.
+        features:
+          - "--no-default-features"
+          - "--no-default-features --features net"
+          - "--no-default-features --features insights"
+          - "" # default: net, disk-space, insights
+          - "--features uniffi"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.features }}
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets ${{ matrix.features }}
+
+      - name: cargo test
+        run: cargo test ${{ matrix.features }}
+
+  # The heavy job: whisper.cpp, llama.cpp and onnxruntime all build C/C++, so
+  # this is slow and kept separate rather than multiplied across the matrix.
+  inference:
+    name: Inference backends
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: all-features
+
+      - name: Install build tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake clang libclang-dev
+
+      - name: cargo clippy --all-features
+        run: cargo clippy --all-targets --all-features
+
+      - name: cargo test --all-features
+        run: cargo test --all-features
+
+  # The catalogue is only useful if the files it names are really there with the
+  # digests it claims. This talks to Hugging Face, so it is not on the PR path.
+  catalog:
+    name: Catalogue points at real files
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # Only the small models: enough to prove the URLs, the redirect handling
+      # and the digests, without pulling gigabytes on every run.
+      - name: Live download, resume and verify
+        run: |
+          cargo test --test live_download -- --ignored --nocapture --test-threads=1 \
+            the_smallest_catalogue_model_really_downloads_and_verifies \
+            a_partial_download_resumes_from_the_real_cdn
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
