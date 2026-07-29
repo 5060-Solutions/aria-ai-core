@@ -1,0 +1,12 @@
+# Same lint bar as the sibling Rust repos (aria-cloud-pbx). Unlike them this
+# crate does NOT blanket-allow `missing_errors_doc` / `missing_panics_doc`:
+# it is consumed over FFI, so the error contract of every public function is
+# part of the API. The few lints this crate does relax are allowed at the
+# crate root in `src/lib.rs`, each with the reason next to it.
+[target.'cfg(all())']
+rustflags = [
+    "-Dwarnings",
+    "-Wclippy::all",
+    "-Wclippy::pedantic",
+    "-Wclippy::nursery",
+]

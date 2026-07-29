@@ -1,0 +1,82 @@
+[package]
+name = "aria-ai-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["5060 Solutions <josh@5060solutions.com>"]
+description = "On-device transcription and summarization core for the Aria softphone family"
+license = "LicenseRef-Proprietary"
+
+[lib]
+crate-type = ["lib", "staticlib", "cdylib"]
+name = "aria_ai_core"
+
+# Only built when the `uniffi` feature is on — desktop (Tauri) never needs it.
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+required-features = ["uniffi"]
+
+# The harness downloads models, so it needs the HTTPS transport. Declared here
+# rather than #[cfg]-ing the whole file, so `--no-default-features` skips
+# building it instead of failing on it.
+[[bin]]
+name = "aria-ai-cli"
+path = "src/bin/aria-ai-cli.rs"
+required-features = ["net"]
+
+[features]
+default = ["net", "disk-space", "insights"]
+
+# ── Host integration ────────────────────────────────────────────────────────
+# HTTPS model downloads via reqwest/rustls. Off => bring your own `ModelSource`.
+net = ["dep:reqwest"]
+# Real free-space probing. Off => bring your own `DiskSpaceProbe`.
+disk-space = ["dep:fs4"]
+# UniFFI scaffolding for iOS/Android. Desktop consumes the plain Rust API.
+uniffi = ["dep:uniffi"]
+# Encrypted on-device insight storage (SQLite + AES-256-GCM). On by default:
+# a call-insights feature that cannot remember anything is not a feature.
+insights = ["dep:rusqlite", "dep:aes-gcm", "dep:rand"]
+
+# ── Inference backends (heavy native deps — never on by default) ─────────────
+# Parakeet-TDT via sherpa-onnx. Primary STT per the model research.
+stt-parakeet = ["dep:sherpa-rs"]
+# Whisper via whisper.cpp. Secondary STT ("back pocket") per the model research.
+stt-whisper = ["dep:whisper-rs"]
+# Qwen3-Instruct GGUF via llama.cpp, with GBNF-constrained JSON output.
+llm-llama = ["dep:llama-cpp-2", "dep:encoding_rs"]
+# Everything needed for a real end-to-end run.
+inference = ["stt-parakeet", "llm-llama"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+sha2 = "0.10"
+log = "0.4"
+
+# Optional host-integration deps.
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+], optional = true }
+fs4 = { version = "1", optional = true }
+# `bundled` so the schema does not depend on whatever SQLite the OS ships.
+rusqlite = { version = "0.32", features = ["bundled"], optional = true }
+aes-gcm = { version = "0.10", optional = true }
+rand = { version = "0.8", optional = true }
+uniffi = { version = "0.28", features = ["cli"], optional = true }
+
+# Optional inference deps. `llama-cpp-2` explicitly does not follow semver —
+# pin it exactly (see docs/superpowers/specs/2026-07-28-on-device-model-research.md §5.4).
+sherpa-rs = { version = "0.6", optional = true }
+whisper-rs = { version = "0.16", optional = true }
+llama-cpp-2 = { version = "=0.1.152", optional = true }
+# Only for `llama-cpp-2`'s incremental UTF-8 decoder; already in its tree.
+encoding_rs = { version = "0.8", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[package.metadata.docs.rs]
+all-features = false
