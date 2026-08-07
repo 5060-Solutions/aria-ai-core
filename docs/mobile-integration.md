@@ -10,7 +10,7 @@ Everything below was verified by building, not by reading documentation.
 | Core (SQLite, rustls, UniFFI) | ✅ | ✅ |
 | `stt-whisper` (whisper.cpp) | ✅ after four fixes | ✅ |
 | `llm-llama` (llama.cpp) | ✅ | ✅ |
-| **both together** | ❌ duplicate ggml | ❌ deferred to app link |
+| **both together** | ✅ via shared ggml | ✅ via shared ggml |
 | `stt-parakeet` (sherpa-onnx) | plausible, untested | ❌ unsupported |
 
 ## Parakeet cannot target iOS devices
@@ -69,24 +69,32 @@ It does. Built directly with CMake, outside cargo:
 2. whisper.cpp built with `-DWHISPER_USE_SYSTEM_GGML=ON` and `-Dggml_DIR=<prefix>`
    → **compiles and links**, producing `libwhisper.a` with no ggml of its own.
 
-So one ggml can serve both. What remains is plumbing that through the Rust
-`-sys` crates, which do not expose the flag.
+### Resolved — the `stt-whisper-with-llm` feature
 
-### Remaining work for a shared ggml
+Patched crates live in the sibling `vendor/` repo and are wired in via
+`[patch.crates-io]`. It turned out no second ggml build is needed: llama.cpp
+already installs `lib/cmake/ggml` next to its own libraries, so whisper.cpp can
+simply be pointed at it.
 
-- Fork/patch `whisper-rs-sys` to pass `WHISPER_USE_SYSTEM_GGML` and to fix the
-  host-vs-target `cfg!` bug above.
-- Fork/patch `llama-cpp-sys-2` to pass `LLAMA_USE_SYSTEM_GGML` (its cmake config
-  starts at `build.rs:599`).
-- Build ggml once per target and point both at it.
-- Pin the whisper.cpp and llama.cpp revisions together, and re-verify on every
-  bump — this is the ongoing maintenance cost of the approach.
+`llama-cpp-sys-2` publishes that path, and because it declares `links = "llama"`
+cargo exposes it to dependents as `DEP_LLAMA_GGML_DIR`:
 
-Both crates declare a `links` key (`whisper`, `llama` respectively), so a
-`[target.<triple>.<links>]` override in `.cargo/config.toml` is a possible route
-that avoids forking — but note `whisper-rs-sys/src/lib.rs` does
-`include!(concat!(env!("OUT_DIR"), "/bindings.rs"))`, so skipping its build
-script entirely would leave the bindings unbuilt. A fork is the cleaner path.
+```rust
+println!("cargo:ggml_dir={}", build_dir.join("lib/cmake/ggml").display());
+```
+
+`whisper-rs-sys` gains an optional `system-ggml` feature which takes a **normal**
+dependency on `llama-cpp-sys-2` — normal rather than build-, because cargo only
+exports a `links` crate's metadata to crates that depend on it normally, and it
+also forces the build order. When `DEP_LLAMA_GGML_DIR` is set it builds with
+`WHISPER_USE_SYSTEM_GGML=ON` and stops emitting its own `-lggml*`.
+
+Verified: `--features stt-whisper-with-llm` links on the host, Android arm64 and
+iOS arm64, and the combined iOS static library contains **one** definition of
+`ggml_init` and `ggml_backend_buffer_set_usage`, where it previously had two.
+
+The maintenance cost is real: on any whisper.cpp or llama.cpp bump the two ggml
+revisions must still be compatible, so re-run that symbol count after upgrading.
 
 ## Android cross-compilation: four fixes
 

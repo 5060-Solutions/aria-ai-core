@@ -48,6 +48,15 @@ llm-llama = ["dep:llama-cpp-2", "dep:encoding_rs"]
 # Everything needed for a real end-to-end run.
 inference = ["stt-parakeet", "llm-llama"]
 
+# whisper.cpp + llama.cpp in one binary. Requires the shared ggml, otherwise the
+# two vendored copies collide at link time.
+stt-whisper-with-llm = [
+    "stt-whisper",
+    "llm-llama",
+    "dep:whisper-rs-sys",
+    "whisper-rs-sys/system-ggml",
+]
+
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -71,6 +80,10 @@ uniffi = { version = "0.28", features = ["cli"], optional = true }
 # pin it exactly (see docs/superpowers/specs/2026-07-28-on-device-model-research.md §5.4).
 sherpa-rs = { version = "0.6", optional = true }
 whisper-rs = { version = "0.16", optional = true }
+# Depended on directly only to reach its `system-ggml` feature; whisper-rs pulls
+# the same (patched) crate, and cargo unifies the features. Nothing here calls
+# into it.
+whisper-rs-sys = { version = "0.15", optional = true }
 llama-cpp-2 = { version = "=0.1.152", optional = true }
 # Only for `llama-cpp-2`'s incremental UTF-8 decoder; already in its tree.
 encoding_rs = { version = "0.8", optional = true }
@@ -80,3 +93,18 @@ tempfile = "3"
 
 [package.metadata.docs.rs]
 all-features = false
+
+# Patched to share a single ggml between whisper.cpp and llama.cpp.
+#
+# Both crates vendor their own copy, and linking both into one binary fails with
+# `duplicate symbol: ggml_backend_buffer_set_usage` (on iOS it links anyway and
+# silently drops one, which is worse). The patches make llama-cpp-sys-2 publish
+# where it installed ggml's CMake package, and whisper-rs-sys build against that
+# via WHISPER_USE_SYSTEM_GGML instead of compiling a second one. They also fix a
+# host-vs-target `cfg!` bug in whisper-rs-sys that breaks Android cross-builds.
+#
+# See docs/mobile-integration.md. Upstream: utilityai/llama-cpp-rs and
+# codeberg.org/tazz4843/whisper-rs.
+[patch.crates-io]
+whisper-rs-sys = { path = "../vendor/whisper-rs-sys" }
+llama-cpp-sys-2 = { path = "../vendor/llama-cpp-sys-2" }
