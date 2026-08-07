@@ -44,7 +44,7 @@ stt-parakeet = ["dep:sherpa-rs"]
 # Whisper via whisper.cpp. Secondary STT ("back pocket") per the model research.
 stt-whisper = ["dep:whisper-rs"]
 # Qwen3-Instruct GGUF via llama.cpp, with GBNF-constrained JSON output.
-llm-llama = ["dep:llama-cpp-2", "dep:encoding_rs"]
+llm-llama = ["dep:llama-cpp-2", "dep:llama-cpp-sys-2", "dep:encoding_rs"]
 # Everything needed for a real end-to-end run.
 inference = ["stt-parakeet", "llm-llama"]
 
@@ -54,6 +54,7 @@ stt-whisper-with-llm = [
     "stt-whisper",
     "llm-llama",
     "dep:whisper-rs-sys",
+    "dep:llama-cpp-sys-2",
     "whisper-rs-sys/system-ggml",
 ]
 
@@ -85,6 +86,11 @@ whisper-rs = { version = "0.16", optional = true }
 # into it.
 whisper-rs-sys = { version = "0.15", optional = true }
 llama-cpp-2 = { version = "=0.1.152", optional = true }
+# Pinned exactly to the version ../vendor patches. A caret requirement lets
+# cargo drift to a newer llama-cpp-sys-2 from crates.io, which silently drops
+# the shared-ggml patch and brings back the duplicate-symbol link failure —
+# or, worse, a build that links with two ggml copies again.
+llama-cpp-sys-2 = { version = "=0.1.153", optional = true }
 # Only for `llama-cpp-2`'s incremental UTF-8 decoder; already in its tree.
 encoding_rs = { version = "0.8", optional = true }
 

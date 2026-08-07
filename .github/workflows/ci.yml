@@ -32,18 +32,30 @@ jobs:
           - "" # default: net, disk-space, insights
           - "--features uniffi"
     steps:
+      # Checked out into a subdirectory because [patch.crates-io] resolves the
+      # patched -sys crates at ../vendor, relative to this crate.
       - uses: actions/checkout@v4
+        with:
+          path: aria-ai-core
+      - uses: actions/checkout@v4
+        with:
+          repository: 5060-Solutions/aria-vendor
+          path: vendor
+          token: ${{ secrets.VENDOR_TOKEN || github.token }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
+          workspaces: aria-ai-core
           key: ${{ matrix.features }}
 
       - name: cargo clippy
+        working-directory: aria-ai-core
         run: cargo clippy --all-targets ${{ matrix.features }}
 
       - name: cargo test
+        working-directory: aria-ai-core
         run: cargo test ${{ matrix.features }}
 
   # The heavy job: whisper.cpp, llama.cpp and onnxruntime all build C/C++, so
@@ -53,22 +65,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: aria-ai-core
+      - uses: actions/checkout@v4
+        with:
+          repository: 5060-Solutions/aria-vendor
+          path: vendor
+          token: ${{ secrets.VENDOR_TOKEN || github.token }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
+          workspaces: aria-ai-core
           key: all-features
 
       - name: Install build tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake clang libclang-dev
+          sudo apt-get install -y cmake clang libclang-dev ninja-build
 
+      # whisper.cpp and llama.cpp share one ggml through the patched -sys
+      # crates; without that this job fails with
+      # `duplicate symbol: ggml_backend_buffer_set_usage`.
       - name: cargo clippy --all-features
+        working-directory: aria-ai-core
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: cargo clippy --all-targets --all-features
 
       - name: cargo test --all-features
+        working-directory: aria-ai-core
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: cargo test --all-features
 
   # The catalogue is only useful if the files it names are really there with the
@@ -79,12 +108,22 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: aria-ai-core
+      - uses: actions/checkout@v4
+        with:
+          repository: 5060-Solutions/aria-vendor
+          path: vendor
+          token: ${{ secrets.VENDOR_TOKEN || github.token }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: aria-ai-core
 
       # Only the small models: enough to prove the URLs, the redirect handling
       # and the digests, without pulling gigabytes on every run.
       - name: Live download, resume and verify
+        working-directory: aria-ai-core
         run: |
           cargo test --test live_download -- --ignored --nocapture --test-threads=1 \
             the_smallest_catalogue_model_really_downloads_and_verifies \
@@ -95,9 +134,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: aria-ai-core
+      - uses: actions/checkout@v4
+        with:
+          repository: 5060-Solutions/aria-vendor
+          path: vendor
+          token: ${{ secrets.VENDOR_TOKEN || github.token }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: aria-ai-core
       - name: cargo audit
+        working-directory: aria-ai-core
         run: |
           cargo install cargo-audit --locked
           cargo audit
