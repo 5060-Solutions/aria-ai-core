@@ -138,7 +138,10 @@ impl Transcriber for WhisperTranscriber {
         params.set_print_timestamps(false);
         match forced_language(req.language.as_deref())? {
             Some(lang) => params.set_language(Some(lang)),
-            None => params.set_detect_language(true),
+            // "auto", NOT set_detect_language(true): that flag makes
+            // whisper_full run detection and return before decoding anything,
+            // so the language comes back correct and the transcript is empty.
+            None => params.set_language(Some("auto")),
         }
 
         let mut state = lock(&self.state);
