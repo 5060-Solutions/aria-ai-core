@@ -9,6 +9,7 @@ pub mod ring;
 pub mod segment;
 pub mod tap;
 pub mod vad;
+pub mod wav;
 
 pub use resample::{SincResampler, TARGET_RATE_HZ};
 pub use ring::{PcmRing, RingStats};
