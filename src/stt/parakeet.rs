@@ -33,9 +33,15 @@ use crate::stt::{TranscribeOutput, TranscribeRequest, Transcriber, Utterance};
 use crate::util::{lock, samples_to_ms};
 
 /// The four files a sherpa-onnx transducer needs, relative to the model dir.
-const ENCODER: &str = "encoder.onnx";
-const DECODER: &str = "decoder.onnx";
-const JOINER: &str = "joiner.onnx";
+// These must match the file names the catalogue actually downloads. The
+// catalogue ships the int8 variants — that is the whole point of the
+// "-int8" model — while these constants named the float32 files, so the
+// primary STT engine could never load a model installed through the normal
+// path. Nothing caught it because loading is only reachable with
+// stt-parakeet enabled, which CI cannot build.
+const ENCODER: &str = "encoder.int8.onnx";
+const DECODER: &str = "decoder.int8.onnx";
+const JOINER: &str = "joiner.int8.onnx";
 const TOKENS: &str = "tokens.txt";
 
 /// Filterbank dimension Parakeet was trained with.
