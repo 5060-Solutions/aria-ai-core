@@ -62,7 +62,17 @@ jobs:
   # this is slow and kept separate rather than multiplied across the matrix.
   inference:
     name: Inference backends
-    runs-on: ubuntu-latest
+    # macOS, not ubuntu. sherpa-rs-sys's download-binaries feature fetches
+    # prebuilt onnxruntime and sherpa-onnx for macOS but produced nothing on
+    # the Linux runner, while still emitting
+    # `cargo:rustc-link-lib=dylib=onnxruntime` and
+    # `=sherpa-onnx-c-api` — so the link failed on libraries that were never
+    # downloaded. Verified by listing target/ on both: populated locally on
+    # macOS, empty in CI.
+    #
+    # This is also the honest platform for the job: every target that runs
+    # these backends is macOS, iOS or Android, and none is Linux.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,9 +91,7 @@ jobs:
           key: all-features
 
       - name: Install build tooling
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake clang libclang-dev ninja-build
+        run: brew install cmake ninja
 
       # whisper.cpp and llama.cpp share one ggml through the patched -sys
       # crates; without that this job fails with
