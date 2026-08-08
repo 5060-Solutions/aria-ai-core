@@ -54,7 +54,25 @@ fn backend() -> Result<&'static LlamaBackend> {
     if let Some(b) = BACKEND.get() {
         return Ok(b);
     }
-    // A lost race here means someone else initialised it; take theirs.
+
+    // Serialise initialisation.
+    //
+    // llama.cpp's backend is process-global and init() returns
+    // BackendAlreadyInitialized on a second call. The previous version handled
+    // that by re-reading the OnceLock, but there is a window between one
+    // thread's init() succeeding and its get_or_init() storing the value: a
+    // second thread arriving in that window got AlreadyInitialized *and* an
+    // empty lock, and reported failure for a backend that was in fact fine.
+    // Two tests racing was enough to hit it.
+    static INIT_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _guard = INIT_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+    // Another thread may have finished while we waited for the lock.
+    if let Some(b) = BACKEND.get() {
+        return Ok(b);
+    }
     match LlamaBackend::init() {
         Ok(b) => Ok(BACKEND.get_or_init(|| b)),
         Err(e) => BACKEND
