@@ -94,6 +94,21 @@ jobs:
           CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: cargo clippy --all-targets --all-features
 
+      # sherpa-rs-sys downloads prebuilt onnxruntime + sherpa-onnx into its
+      # OUT_DIR and emits a link-search for them. Linking still fails on this
+      # runner with -lonnxruntime / -lsherpa-onnx-c-api, while the same build
+      # succeeds locally — so this prints what actually landed before the link
+      # step, rather than guessing at the cause.
+      - name: Locate the downloaded sherpa/onnx libraries
+        working-directory: aria-ai-core
+        run: |
+          echo "── candidate libs under target/ ──"
+          find target -name 'libonnxruntime*' -o -name 'libsherpa-onnx*' 2>/dev/null | head -20
+          echo "── build script output dirs ──"
+          find target -type d -name 'out' -path '*sherpa*' 2>/dev/null | head -5
+          echo "── link directives emitted ──"
+          find target -name output -path '*sherpa-rs-sys*' -exec grep -h 'rustc-link' {} + 2>/dev/null | sort -u | head -20
+
       - name: cargo test --all-features
         working-directory: aria-ai-core
         env:
