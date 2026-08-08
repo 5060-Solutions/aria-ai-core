@@ -50,6 +50,9 @@ const PENALTY_WINDOW: i32 = 64;
 static BACKEND: OnceLock<LlamaBackend> = OnceLock::new();
 
 /// Initialise (once) and borrow the process-wide llama.cpp backend.
+/// Serialises backend initialisation; see [`backend`].
+static INIT_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 fn backend() -> Result<&'static LlamaBackend> {
     if let Some(b) = BACKEND.get() {
         return Ok(b);
@@ -64,7 +67,6 @@ fn backend() -> Result<&'static LlamaBackend> {
     // second thread arriving in that window got AlreadyInitialized *and* an
     // empty lock, and reported failure for a backend that was in fact fine.
     // Two tests racing was enough to hit it.
-    static INIT_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
     let _guard = INIT_LOCK
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
