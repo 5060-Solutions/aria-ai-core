@@ -114,3 +114,8 @@ all-features = false
 [patch.crates-io]
 whisper-rs-sys = { path = "../vendor/whisper-rs-sys" }
 llama-cpp-sys-2 = { path = "../vendor/llama-cpp-sys-2" }
+# Patched so its build script stops assuming `target/<profile>/deps` exists,
+# which Cargo 1.100's build-dir layout no longer creates. The dylibs now land
+# in its OUT_DIR, a link-search path Cargo puts on the loader path for
+# `cargo test` / `cargo run`. Upstream: thewh1teagle/sherpa-rs.
+sherpa-rs-sys = { path = "../vendor/sherpa-rs-sys" }

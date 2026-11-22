@@ -1832,8 +1832,6 @@ dependencies = [
 [[package]]
 name = "sherpa-rs-sys"
 version = "0.6.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "591c9432b20f41d47f622a73c2888b188c321e313d820824df7d9fa51dbada43"
 dependencies = [
  "bindgen 0.69.5",
  "bzip2",
