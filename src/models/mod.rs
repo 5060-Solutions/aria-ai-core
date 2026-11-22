@@ -15,8 +15,7 @@ pub mod http;
 
 pub use capability::{DeviceCapability, DeviceTier, Platform};
 pub use catalog::{
-    check_host, Catalog, ModelAvailability, ModelDescriptor, ModelKind, ModelRuntime,
-    ALLOWED_HOSTS,
+    check_host, Catalog, ModelAvailability, ModelDescriptor, ModelKind, ModelRuntime, ALLOWED_HOSTS,
 };
 pub use download::{
     CancelToken, DownloadProgress, DownloadState, Downloader, ModelSource, SourceStream,

@@ -30,11 +30,11 @@ use std::time::Duration;
 
 use aria_ai_core::engine::{AiConfig, AiEngine};
 use aria_ai_core::error::AiError;
+use aria_ai_core::llm::pipeline::SummaryConfig;
+use aria_ai_core::llm::prompt::CallContext;
 use aria_ai_core::models::capability::{DeviceCapability, Platform};
 use aria_ai_core::models::catalog::ModelKind;
 use aria_ai_core::models::download::{DownloadProgress, DownloadState};
-use aria_ai_core::llm::pipeline::SummaryConfig;
-use aria_ai_core::llm::prompt::CallContext;
 use aria_ai_core::session::SessionConfig;
 use aria_ai_core::types::{CallInsight, Speaker};
 
@@ -214,7 +214,11 @@ fn cmd_models(root: &Path, json: bool) -> Result<(), AiError> {
             note
         );
     }
-    println!("\nstorage: {} in {}", human_bytes(e.storage_bytes()), root.display());
+    println!(
+        "\nstorage: {} in {}",
+        human_bytes(e.storage_bytes()),
+        root.display()
+    );
     for kind in [ModelKind::Stt, ModelKind::Llm] {
         if let Some(r) = e.recommended(kind) {
             println!("recommended {kind:?}: {}", r.id);
@@ -276,7 +280,9 @@ fn render_progress(p: &DownloadProgress) -> String {
     } else {
         String::new()
     };
-    let eta = p.eta_secs.map_or_else(String::new, |s| format!(" eta {s}s"));
+    let eta = p
+        .eta_secs
+        .map_or_else(String::new, |s| format!(" eta {s}s"));
     format!(
         "{:?}: {:.1}% ({} / {}){rate}{eta}",
         p.state,
@@ -368,11 +374,12 @@ fn cmd_transcribe(
             remote_label: flag(args, "--remote").unwrap_or("unknown").to_string(),
             // The crate carries no date library on purpose; the host formats
             // dates, and here the host is a shell.
-            date_label: flag(args, "--date").unwrap_or("an unspecified date").to_string(),
+            date_label: flag(args, "--date")
+                .unwrap_or("an unspecified date")
+                .to_string(),
             duration_secs: transcript.duration_ms / 1000,
         };
-        let summary =
-            session.summarize(summarizer.as_ref(), &ctx, &SummaryConfig::default())?;
+        let summary = session.summarize(summarizer.as_ref(), &ctx, &SummaryConfig::default())?;
         if !json {
             println!("\n── summary ──");
             if summary.degraded {
@@ -525,7 +532,9 @@ fn cmd_insights(root: &Path, args: &[String], json: bool) -> Result<(), AiError>
             println!("deleted {n} insight(s)");
             Ok(())
         }
-        other => Err(AiError::Config(format!("unknown insights subcommand {other:?}"))),
+        other => Err(AiError::Config(format!(
+            "unknown insights subcommand {other:?}"
+        ))),
     }
 }
 
@@ -548,10 +557,16 @@ mod tests {
 
     #[test]
     fn flags_and_positional_arguments_parse_independently() {
-        let args: Vec<String> = ["transcribe", "call.wav", "--stt", "whisper-base-q5_1", "--json"]
-            .iter()
-            .map(|s| (*s).to_string())
-            .collect();
+        let args: Vec<String> = [
+            "transcribe",
+            "call.wav",
+            "--stt",
+            "whisper-base-q5_1",
+            "--json",
+        ]
+        .iter()
+        .map(|s| (*s).to_string())
+        .collect();
         assert_eq!(arg_at(&args, 1, "path").expect("path"), "call.wav");
         assert_eq!(flag(&args, "--stt"), Some("whisper-base-q5_1"));
         assert_eq!(flag(&args, "--llm"), None);
@@ -559,7 +574,10 @@ mod tests {
 
     #[test]
     fn a_missing_positional_is_an_error_not_a_flag() {
-        let args: Vec<String> = ["download", "--json"].iter().map(|s| (*s).to_string()).collect();
+        let args: Vec<String> = ["download", "--json"]
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect();
         assert!(arg_at(&args, 1, "model-id").is_err());
     }
 

@@ -172,9 +172,9 @@ pub fn summarize(
             AiError::InvalidModelOutput("model returned nothing usable".into())
         })),
         Err(e) => Err(match last_err {
-            Some(AiError::InvalidModelOutput(m)) => AiError::InvalidModelOutput(format!(
-                "{m}; plain-text fallback also failed: {e}"
-            )),
+            Some(AiError::InvalidModelOutput(m)) => {
+                AiError::InvalidModelOutput(format!("{m}; plain-text fallback also failed: {e}"))
+            }
             _ => e,
         }),
     }
@@ -248,8 +248,8 @@ pub fn parse_summary(raw: &str, cfg: &SummaryConfig) -> Result<Summary> {
     let json = extract_json_object(raw)
         .ok_or_else(|| AiError::InvalidModelOutput("no JSON object in the response".into()))?;
 
-    let parsed: RawSummary = serde_json::from_str(json)
-        .map_err(|e| AiError::InvalidModelOutput(format!("{e}")))?;
+    let parsed: RawSummary =
+        serde_json::from_str(json).map_err(|e| AiError::InvalidModelOutput(format!("{e}")))?;
 
     let key_points = clean_list(
         parsed.key_points,
@@ -372,7 +372,11 @@ fn truncate_chars(s: &str, max: usize) -> String {
     if s.chars().count() <= max {
         return s.to_string();
     }
-    s.chars().take(max).collect::<String>().trim_end().to_string()
+    s.chars()
+        .take(max)
+        .collect::<String>()
+        .trim_end()
+        .to_string()
 }
 
 #[cfg(test)]
@@ -483,14 +487,25 @@ mod tests {
         let m = MockSummarizer::new().with_context(4_096);
         let out = summarize(&t, &m, &ctx(), &SummaryConfig::default()).expect("summary");
 
-        assert!(out.windows > 1, "expected map-reduce, got {} window", out.windows);
-        assert_eq!(m.calls(), out.windows + 1, "one call per window plus reduce");
+        assert!(
+            out.windows > 1,
+            "expected map-reduce, got {} window",
+            out.windows
+        );
+        assert_eq!(
+            m.calls(),
+            out.windows + 1,
+            "one call per window plus reduce"
+        );
 
         let prompts = m.prompts();
         let (maps, reduce) = prompts.split_at(out.windows);
-        assert!(maps.iter().enumerate().all(|(i, p)| p
-            .user
-            .starts_with(&format!("Section {} of {}", i + 1, out.windows))));
+        assert!(maps
+            .iter()
+            .enumerate()
+            .all(|(i, p)| p
+                .user
+                .starts_with(&format!("Section {} of {}", i + 1, out.windows))));
         assert!(maps.iter().all(|p| p.max_tokens == 256));
         assert!(reduce[0].user.contains("SECTION SUMMARIES"));
         assert!(reduce[0].user.contains("OPENING OF THE CALL"));
@@ -670,7 +685,10 @@ mod tests {
             "{\"key_points\": \"not an array\"}",
         ] {
             assert!(
-                matches!(parse_summary(raw, &cfg), Err(AiError::InvalidModelOutput(_))),
+                matches!(
+                    parse_summary(raw, &cfg),
+                    Err(AiError::InvalidModelOutput(_))
+                ),
                 "accepted {raw:?}"
             );
         }

@@ -83,7 +83,9 @@ impl WhisperTranscriber {
 
         Ok(Self {
             model_id: model.id.clone(),
-            threads: std::ffi::c_int::try_from(cap.inference_threads()).unwrap_or(1).max(1),
+            threads: std::ffi::c_int::try_from(cap.inference_threads())
+                .unwrap_or(1)
+                .max(1),
             state: Mutex::new(state),
         })
     }
@@ -168,8 +170,7 @@ impl Transcriber for WhisperTranscriber {
                 text,
                 // `no_speech_probability` is the only confidence signal whisper
                 // gives without token timestamps. It is not calibrated.
-                confidence: (DEFAULT_CONFIDENCE - segment.no_speech_probability())
-                    .clamp(0.0, 1.0),
+                confidence: (DEFAULT_CONFIDENCE - segment.no_speech_probability()).clamp(0.0, 1.0),
             });
         }
 

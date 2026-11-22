@@ -174,10 +174,7 @@ mod tests {
             MockResponse::error("boom"),
         ]);
         assert_eq!(m.complete(&req()).expect("ok"), "first");
-        assert!(matches!(
-            m.complete(&req()),
-            Err(AiError::Summarization(_))
-        ));
+        assert!(matches!(m.complete(&req()), Err(AiError::Summarization(_))));
         assert!(m.complete(&req()).expect("ok").contains("headline"));
         assert_eq!(m.calls(), 3);
     }
@@ -185,7 +182,9 @@ mod tests {
     #[test]
     fn prompts_are_recorded_for_assertions() {
         let m = MockSummarizer::new();
-        let r = GenerationRequest::new("S", "U").with_grammar("g").with_max_tokens(7);
+        let r = GenerationRequest::new("S", "U")
+            .with_grammar("g")
+            .with_max_tokens(7);
         m.complete(&r).expect("ok");
         let seen = m.prompts();
         assert_eq!(seen.len(), 1);
@@ -197,10 +196,7 @@ mod tests {
     #[test]
     fn a_failing_mock_never_succeeds() {
         let m = MockSummarizer::failing("no model loaded");
-        assert!(matches!(
-            m.complete(&req()),
-            Err(AiError::Summarization(_))
-        ));
+        assert!(matches!(m.complete(&req()), Err(AiError::Summarization(_))));
     }
 
     #[test]

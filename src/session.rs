@@ -34,9 +34,7 @@ use crate::llm::pipeline::{summarize, SummaryConfig};
 use crate::llm::prompt::CallContext;
 use crate::llm::Summarizer;
 use crate::stt::{TranscribeRequest, Transcriber};
-use crate::types::{
-    CallInsight, InsightStatus, Speaker, Summary, Transcript, TranscriptSegment,
-};
+use crate::types::{CallInsight, InsightStatus, Speaker, Summary, Transcript, TranscriptSegment};
 use crate::util::lock;
 
 /// Language tag used when nothing could be detected.
@@ -232,14 +230,17 @@ impl CallSession {
             match inner.capture.take() {
                 Some(c) => c,
                 None => {
-                    return inner.transcript.clone().ok_or_else(|| AiError::InvalidState {
-                        expected: "stopped with audio captured".into(),
-                        actual: if self.tap.is_sealed() {
-                            "audio already consumed".into()
-                        } else {
-                            "still capturing".into()
-                        },
-                    })
+                    return inner
+                        .transcript
+                        .clone()
+                        .ok_or_else(|| AiError::InvalidState {
+                            expected: "stopped with audio captured".into(),
+                            actual: if self.tap.is_sealed() {
+                                "audio already consumed".into()
+                            } else {
+                                "still capturing".into()
+                            },
+                        })
                 }
             }
         };
@@ -427,10 +428,7 @@ impl CallSession {
             summary: inner.summary.clone(),
             stt_model_id: inner.stt_model_id.clone(),
             llm_model_id: inner.llm_model_id.clone(),
-            status: inner
-                .status
-                .clone()
-                .unwrap_or(InsightStatus::Pending),
+            status: inner.status.clone().unwrap_or(InsightStatus::Pending),
         }
     }
 
@@ -534,11 +532,8 @@ mod tests {
         );
         s.stop().expect("stop");
 
-        let stt = MockTranscriber::scripted([
-            "Hi, it's Sarah",
-            "Hello Sarah",
-            "Can we move the review",
-        ]);
+        let stt =
+            MockTranscriber::scripted(["Hi, it's Sarah", "Hello Sarah", "Can we move the review"]);
         let t = s.transcribe(&stt).expect("transcribe");
 
         assert_eq!(t.call_id, "call-1");
@@ -555,9 +550,16 @@ mod tests {
         assert_eq!(t.segments[2].text, "Can we move the review");
 
         // Timings are absolute in the call, ordered, and inside the call.
-        assert!(t.segments.windows(2).all(|w| w[0].start_ms <= w[1].start_ms));
+        assert!(t
+            .segments
+            .windows(2)
+            .all(|w| w[0].start_ms <= w[1].start_ms));
         assert!(t.segments[0].start_ms < 300, "{}", t.segments[0].start_ms);
-        assert!(t.segments[1].start_ms >= 1_000, "{}", t.segments[1].start_ms);
+        assert!(
+            t.segments[1].start_ms >= 1_000,
+            "{}",
+            t.segments[1].start_ms
+        );
         assert!(t.segments.iter().all(|s| s.end_ms <= t.duration_ms + 500));
     }
 
@@ -725,8 +727,8 @@ mod tests {
 
     #[test]
     fn a_forced_language_is_carried_through_to_the_transcript() {
-        let s = CallSession::start(SessionConfig::new("call-1").with_language("de"))
-            .expect("start");
+        let s =
+            CallSession::start(SessionConfig::new("call-1").with_language("de")).expect("start");
         run_call(&s, &[(Speaker::Local, 900)]);
         s.stop().expect("stop");
         let t = s.transcribe(&MockTranscriber::new()).expect("transcribe");
@@ -775,7 +777,8 @@ mod tests {
         let s = CallSession::start(SessionConfig::new("call-1")).expect("start");
         {
             let _drain = s.spawn_drain_thread(Duration::from_millis(1));
-            s.push_local(&silence_i16(8_000, 1_000), 8_000).expect("push");
+            s.push_local(&silence_i16(8_000, 1_000), 8_000)
+                .expect("push");
             std::thread::sleep(Duration::from_millis(200));
         }
 
@@ -784,7 +787,8 @@ mod tests {
         assert!(before.captured_ms > 0, "the drain thread never pumped");
 
         // ...and `Drop` stopped and joined it, so nothing drains the ring now.
-        s.push_local(&silence_i16(8_000, 1_000), 8_000).expect("push");
+        s.push_local(&silence_i16(8_000, 1_000), 8_000)
+            .expect("push");
         std::thread::sleep(Duration::from_millis(200));
         let (after, _) = s.stats();
         assert_eq!(
@@ -825,7 +829,11 @@ mod tests {
             .summarize(&llm, &CallContext::default(), &SummaryConfig::default())
             .expect("summary");
 
-        assert!(llm.calls() > 2, "expected map-reduce, got {} calls", llm.calls());
+        assert!(
+            llm.calls() > 2,
+            "expected map-reduce, got {} calls",
+            llm.calls()
+        );
         assert!(!summary.degraded);
         assert_ne!(summary.headline, "");
     }

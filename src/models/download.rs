@@ -252,7 +252,13 @@ impl Downloader {
                     .is_ok_and(|actual| actual.eq_ignore_ascii_case(&file.sha256))
             {
                 base = base.saturating_add(file.size_bytes);
-                on_progress(&progress_of(model, base, total, 0.0, DownloadState::Running));
+                on_progress(&progress_of(
+                    model,
+                    base,
+                    total,
+                    0.0,
+                    DownloadState::Running,
+                ));
                 continue;
             }
 
@@ -268,7 +274,13 @@ impl Downloader {
             base = base.saturating_add(file.size_bytes);
         }
 
-        on_progress(&progress_of(model, total, total, 0.0, DownloadState::Completed));
+        on_progress(&progress_of(
+            model,
+            total,
+            total,
+            0.0,
+            DownloadState::Completed,
+        ));
         Ok(dir)
     }
 
@@ -349,7 +361,8 @@ impl Downloader {
                 break;
             }
             let chunk = buf.get(..n).unwrap_or(&[]);
-            file.write_all(chunk).map_err(|e| AiError::io(part_path, &e))?;
+            file.write_all(chunk)
+                .map_err(|e| AiError::io(part_path, &e))?;
             hasher.update(chunk);
             downloaded = downloaded.saturating_add(n as u64);
 
@@ -396,8 +409,7 @@ impl Downloader {
         }
 
         // Atomic install: never leave a half file where the loader looks.
-        fs::rename(part_path, &spec.final_path)
-            .map_err(|e| AiError::io(&spec.final_path, &e))?;
+        fs::rename(part_path, &spec.final_path).map_err(|e| AiError::io(&spec.final_path, &e))?;
         Ok(())
     }
 }
@@ -474,7 +486,9 @@ fn hash_prefix(path: &std::path::Path, len: u64, hasher: &mut Sha256) -> Result<
     let mut remaining = len;
     let mut buf = vec![0_u8; READ_CHUNK];
     while remaining > 0 {
-        let want = usize::try_from(remaining).unwrap_or(READ_CHUNK).min(READ_CHUNK);
+        let want = usize::try_from(remaining)
+            .unwrap_or(READ_CHUNK)
+            .min(READ_CHUNK);
         let n = file
             .read(buf.get_mut(..want).unwrap_or(&mut []))
             .map_err(|e| AiError::io(path, &e))?;
@@ -538,8 +552,10 @@ pub(crate) mod fake {
         fn open(&self, url: &str, offset: u64) -> Result<SourceStream> {
             crate::models::catalog::check_host(url)?;
             self.opens.fetch_add(1, Ordering::SeqCst);
-            self.last_offset
-                .store(usize::try_from(offset).unwrap_or(usize::MAX), Ordering::SeqCst);
+            self.last_offset.store(
+                usize::try_from(offset).unwrap_or(usize::MAX),
+                Ordering::SeqCst,
+            );
 
             let behaviour = *crate::util::lock(&self.behaviour);
             if behaviour == Behaviour::Unreachable {
@@ -556,7 +572,9 @@ pub(crate) mod fake {
             let start = if behaviour == Behaviour::IgnoresRange {
                 0
             } else {
-                usize::try_from(offset).unwrap_or(usize::MAX).min(body.len())
+                usize::try_from(offset)
+                    .unwrap_or(usize::MAX)
+                    .min(body.len())
             };
             let mut slice = body.split_off(start);
             if let Behaviour::TruncatesAfter(n) = behaviour {
@@ -604,7 +622,9 @@ mod tests {
                 .get(url)
                 .ok_or_else(|| AiError::Download(format!("no body for {url}")))?
                 .clone();
-            let start = usize::try_from(offset).unwrap_or(usize::MAX).min(body.len());
+            let start = usize::try_from(offset)
+                .unwrap_or(usize::MAX)
+                .min(body.len());
             let slice = body[start..].to_vec();
             Ok(SourceStream {
                 total_bytes: Some(slice.len() as u64),
@@ -618,7 +638,13 @@ mod tests {
     /// the wrong path shows up as a hash failure rather than passing silently.
     fn multi_harness(
         free: u64,
-    ) -> (tempfile::TempDir, ModelStore, Downloader, ModelDescriptor, Arc<MultiSource>) {
+    ) -> (
+        tempfile::TempDir,
+        ModelStore,
+        Downloader,
+        ModelDescriptor,
+        Arc<MultiSource>,
+    ) {
         let dir = tempfile::tempdir().expect("tempdir");
         let store =
             ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(free))).expect("store");
@@ -818,7 +844,10 @@ mod tests {
         }
     }
 
-    fn collect(h: &Harness, cancel: &CancelToken) -> (Result<std::path::PathBuf>, Vec<DownloadProgress>) {
+    fn collect(
+        h: &Harness,
+        cancel: &CancelToken,
+    ) -> (Result<std::path::PathBuf>, Vec<DownloadProgress>) {
         let mut seen = Vec::new();
         let r = h
             .downloader
@@ -833,7 +862,10 @@ mod tests {
 
         let path = result.expect("download");
         assert_eq!(fs::read(&path).expect("read"), h.body);
-        assert!(!h.store.part_path_for(&h.model).exists(), ".part must be gone");
+        assert!(
+            !h.store.part_path_for(&h.model).exists(),
+            ".part must be gone"
+        );
         h.store.verify(&h.model).expect("installed file verifies");
 
         assert!(matches!(
@@ -888,7 +920,9 @@ mod tests {
 
         // The transport was asked to start at the resume point…
         assert_eq!(
-            h.source.last_offset.load(std::sync::atomic::Ordering::SeqCst) as u64,
+            h.source
+                .last_offset
+                .load(std::sync::atomic::Ordering::SeqCst) as u64,
             resumed_from
         );
         // …and the first progress report already credits those bytes.
@@ -928,13 +962,20 @@ mod tests {
 
         let (result, _) = collect(&h, &CancelToken::new());
         match result {
-            Err(AiError::IntegrityMismatch { id, expected, actual }) => {
+            Err(AiError::IntegrityMismatch {
+                id,
+                expected,
+                actual,
+            }) => {
                 assert_eq!(id, "test-model");
                 assert_ne!(expected, actual);
             }
             other => panic!("expected IntegrityMismatch, got {other:?}"),
         }
-        assert!(!h.store.is_installed(&h.model), "must not install a bad file");
+        assert!(
+            !h.store.is_installed(&h.model),
+            "must not install a bad file"
+        );
         assert!(
             !h.store.part_path_for(&h.model).exists(),
             "a hash failure must not leave a resumable partial"

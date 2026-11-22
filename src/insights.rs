@@ -453,7 +453,10 @@ mod tests {
             !haystack.contains("the alarm code is 4417"),
             "transcript text found in plaintext on disk"
         );
-        assert!(!haystack.contains("Gate code shared"), "summary in plaintext");
+        assert!(
+            !haystack.contains("Gate code shared"),
+            "summary in plaintext"
+        );
         assert!(
             !haystack.contains("whisper-base-q5_1"),
             "model id in plaintext"
@@ -511,7 +514,11 @@ mod tests {
         {
             let conn = crate::util::lock(&s.conn);
             let mut blob: Vec<u8> = conn
-                .query_row("SELECT payload FROM insights WHERE call_id='call-1'", [], |r| r.get(0))
+                .query_row(
+                    "SELECT payload FROM insights WHERE call_id='call-1'",
+                    [],
+                    |r| r.get(0),
+                )
                 .expect("read");
             blob[0] ^= 0xff;
             conn.execute(
@@ -576,7 +583,10 @@ mod tests {
         assert_eq!(row.status, "failed");
         assert!(!row.status.contains("swordfish"));
         // But it survives the round trip inside the sealed payload.
-        assert_eq!(s.get("call-1").expect("get").expect("present").status, i.status);
+        assert_eq!(
+            s.get("call-1").expect("get").expect("present").status,
+            i.status
+        );
     }
 
     #[test]

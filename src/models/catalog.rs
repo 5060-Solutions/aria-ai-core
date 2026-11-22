@@ -132,8 +132,7 @@ pub struct ModelDescriptor {
     pub files: Vec<ModelFile>,
 }
 
-const PLACEHOLDER_SHA: &str =
-    "0000000000000000000000000000000000000000000000000000000000000000";
+const PLACEHOLDER_SHA: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
 /// Is this a usable, non-placeholder SHA-256?
 fn is_real_sha(sha: &str) -> bool {
@@ -230,7 +229,9 @@ impl Catalog {
     pub fn bundled() -> Result<&'static Self> {
         match BUNDLED.get_or_init(|| Self::from_json(BUNDLED_JSON).map_err(|e| e.to_string())) {
             Ok(c) => Ok(c),
-            Err(e) => Err(AiError::Internal(format!("bundled catalog is invalid: {e}"))),
+            Err(e) => Err(AiError::Internal(format!(
+                "bundled catalog is invalid: {e}"
+            ))),
         }
     }
 
@@ -298,8 +299,7 @@ impl Catalog {
     /// All models of a kind, best quality last.
     #[must_use]
     pub fn by_kind(&self, kind: ModelKind) -> Vec<&ModelDescriptor> {
-        let mut v: Vec<&ModelDescriptor> =
-            self.models.iter().filter(|m| m.kind == kind).collect();
+        let mut v: Vec<&ModelDescriptor> = self.models.iter().filter(|m| m.kind == kind).collect();
         v.sort_by_key(|m| (m.quality_tier, m.id.clone()));
         v
     }
@@ -324,9 +324,7 @@ impl Catalog {
     /// The best model of `kind` this device can actually run, if any.
     #[must_use]
     pub fn recommended(&self, kind: ModelKind, cap: &DeviceCapability) -> Option<&ModelDescriptor> {
-        self.by_kind(kind)
-            .into_iter()
-            .rfind(|m| m.fits_device(cap))
+        self.by_kind(kind).into_iter().rfind(|m| m.fits_device(cap))
     }
 }
 
@@ -393,10 +391,7 @@ mod tests {
         assert!(c.catalog_version >= 1);
         assert_ne!(c.models, []);
         assert!(c.get("whisper-base-q5_1").is_ok());
-        assert!(matches!(
-            c.get("nope"),
-            Err(AiError::UnknownModel(_))
-        ));
+        assert!(matches!(c.get("nope"), Err(AiError::UnknownModel(_))));
     }
 
     #[test]
@@ -548,10 +543,7 @@ mod tests {
         let m = c.get("whisper-base-q5_1").expect("model");
         // Derived from the descriptor rather than restated, so the real file
         // size can change without this becoming a lie.
-        assert_eq!(
-            m.required_free_bytes(),
-            m.size_bytes + m.size_bytes / 5
-        );
+        assert_eq!(m.required_free_bytes(), m.size_bytes + m.size_bytes / 5);
         assert!(m.required_free_bytes() > m.size_bytes);
     }
 }

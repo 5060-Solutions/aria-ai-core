@@ -240,7 +240,11 @@ impl Summarizer for LlamaSummarizer {
         let batch_cap = BATCH_TOKENS as usize;
         let mut batch = LlamaBatch::new(batch_cap, 1);
         let last = tokens.len() - 1;
-        for (chunk_start, chunk) in tokens.chunks(batch_cap).enumerate().map(|(i, c)| (i * batch_cap, c)) {
+        for (chunk_start, chunk) in tokens
+            .chunks(batch_cap)
+            .enumerate()
+            .map(|(i, c)| (i * batch_cap, c))
+        {
             batch.clear();
             for (offset, token) in chunk.iter().enumerate() {
                 let pos = chunk_start + offset;
@@ -268,10 +272,7 @@ impl Summarizer for LlamaSummarizer {
             }
             sampler.accept(token);
 
-            match self
-                .model
-                .token_to_piece(token, &mut decoder, false, None)
-            {
+            match self.model.token_to_piece(token, &mut decoder, false, None) {
                 Ok(piece) => out.push_str(&piece),
                 // A token that is not representable on its own is dropped
                 // rather than aborting a summary that is otherwise fine.
@@ -338,12 +339,9 @@ mod tests {
         let path = dir.path().join("not-a-model.gguf");
         std::fs::write(&path, b"definitely not GGUF").expect("write");
 
-        let err = LlamaSummarizer::load(
-            &llm_descriptor(),
-            path.to_str().expect("utf8"),
-            &desktop(),
-        )
-        .expect_err("garbage must not load");
+        let err =
+            LlamaSummarizer::load(&llm_descriptor(), path.to_str().expect("utf8"), &desktop())
+                .expect_err("garbage must not load");
         assert!(matches!(err, AiError::Summarization(_)), "{err:?}");
     }
 }

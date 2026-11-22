@@ -131,8 +131,8 @@ impl Transcriber for ParakeetTranscriber {
             return Ok(TranscribeOutput::empty(language));
         }
 
-        let end_ms = u32::try_from(samples_to_ms(req.samples.len(), req.sample_rate))
-            .unwrap_or(u32::MAX);
+        let end_ms =
+            u32::try_from(samples_to_ms(req.samples.len(), req.sample_rate)).unwrap_or(u32::MAX);
 
         Ok(TranscribeOutput {
             utterances: vec![Utterance {
@@ -176,9 +176,9 @@ fn file_in(dir: &Path, name: &str) -> Result<String> {
             dir.display()
         )));
     }
-    p.to_str().map(ToString::to_string).ok_or_else(|| {
-        AiError::Config(format!("model path is not valid UTF-8: {}", p.display()))
-    })
+    p.to_str()
+        .map(ToString::to_string)
+        .ok_or_else(|| AiError::Config(format!("model path is not valid UTF-8: {}", p.display())))
 }
 
 #[cfg(test)]

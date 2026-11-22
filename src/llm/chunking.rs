@@ -270,7 +270,9 @@ fn backoff_for_overlap(
     let mut idx = end;
     let mut replayed = 0_usize;
     while idx > start + 1 {
-        let Some(seg) = segments.get(idx - 1) else { break };
+        let Some(seg) = segments.get(idx - 1) else {
+            break;
+        };
         let cost = segment_tokens(seg);
         if replayed + cost > overlap_tokens {
             break;
@@ -444,7 +446,9 @@ mod tests {
         assert!(cfg.effective_window_tokens() >= 128);
         let windows = plan_windows(&segs, &cfg);
         assert_ne!(windows, []);
-        assert!(windows.windows(2).all(|p| p[1].start_index > p[0].start_index));
+        assert!(windows
+            .windows(2)
+            .all(|p| p[1].start_index > p[0].start_index));
     }
 
     #[test]
@@ -453,7 +457,10 @@ mod tests {
         assert!(estimate_tokens("one two three four") >= 4);
         let s = seg(Speaker::Local, 0, 1_000, 10);
         assert_eq!(segment_tokens(&s), estimate_tokens(&s.text) + 8);
-        assert_eq!(transcript_tokens(&[s.clone(), s.clone()]), segment_tokens(&s) * 2);
+        assert_eq!(
+            transcript_tokens(&[s.clone(), s.clone()]),
+            segment_tokens(&s) * 2
+        );
     }
 
     #[test]
@@ -463,10 +470,7 @@ mod tests {
         assert_ne!(head, []);
         assert_ne!(tail, []);
         assert_eq!(head.first().map(|s| s.start_ms), Some(0));
-        assert_eq!(
-            tail.last().map(|s| s.end_ms),
-            segs.last().map(|s| s.end_ms)
-        );
+        assert_eq!(tail.last().map(|s| s.end_ms), segs.last().map(|s| s.end_ms));
         // They must not overlap.
         assert!(head.len() + tail.len() <= segs.len());
     }

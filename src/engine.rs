@@ -172,10 +172,7 @@ impl AiEngine {
             return Err(AiError::DeviceTooSmall {
                 id: model.id.clone(),
                 required: model.min_tier.label().to_string(),
-                actual: format!(
-                    "{} ({reason})",
-                    self.config.capability.tier().label()
-                ),
+                actual: format!("{} ({reason})", self.config.capability.tier().label()),
             });
         }
 
@@ -533,7 +530,10 @@ mod tests {
             ),
             other => panic!("expected Failed, got {other:?}"),
         }
-        assert!(!e.installed_models().iter().any(|m| m.id == "whisper-tiny-q5_1"));
+        assert!(!e
+            .installed_models()
+            .iter()
+            .any(|m| m.id == "whisper-tiny-q5_1"));
     }
 
     #[test]
@@ -614,8 +614,8 @@ mod tests {
     #[test]
     fn a_full_call_runs_end_to_end_through_the_facade() {
         use crate::llm::mock::MockSummarizer;
-        use crate::llm::prompt::CallContext;
         use crate::llm::pipeline::SummaryConfig;
+        use crate::llm::prompt::CallContext;
         use crate::stt::MockTranscriber;
         use crate::util::ms_to_samples;
 

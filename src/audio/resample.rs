@@ -463,7 +463,11 @@ mod tests {
         let pass = tone(48_000, 1_000.0, 0.5, 0.9);
         let out2 = SincResampler::resample_all(48_000, 16_000, &pass).expect("build");
         let steady2 = &out2[skip..out2.len() - skip];
-        assert!(rms(steady2) > 0.5, "passband was attenuated: {}", rms(steady2));
+        assert!(
+            rms(steady2) > 0.5,
+            "passband was attenuated: {}",
+            rms(steady2)
+        );
     }
 
     #[test]
@@ -494,7 +498,11 @@ mod tests {
         let mut r = SincResampler::new(48_000, 16_000).expect("build");
         let mut chunked = Vec::new();
         let mut i = 0;
-        for (n, size) in [7_usize, 1, 960, 13, 480, 2, 1919].iter().cycle().enumerate() {
+        for (n, size) in [7_usize, 1, 960, 13, 480, 2, 1919]
+            .iter()
+            .cycle()
+            .enumerate()
+        {
             let _ = n;
             if i >= input.len() {
                 break;
@@ -524,7 +532,10 @@ mod tests {
             .enumerate()
             .max_by(|a, b| a.1.abs().total_cmp(&b.1.abs()))
             .map_or(0, |(i, _)| i);
-        assert!(peak.abs_diff(200) <= 1, "impulse landed at {peak}, want ~200");
+        assert!(
+            peak.abs_diff(200) <= 1,
+            "impulse landed at {peak}, want ~200"
+        );
     }
 
     #[test]
