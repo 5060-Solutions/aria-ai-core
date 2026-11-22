@@ -619,7 +619,7 @@ mod tests {
         s.stop().expect("stop");
 
         let t = s.transcribe(&MockTranscriber::new()).expect("transcribe");
-        assert!(t.segments.is_empty());
+        assert_eq!(t.segments, []);
         assert!(t.is_empty());
     }
 
@@ -827,6 +827,6 @@ mod tests {
 
         assert!(llm.calls() > 2, "expected map-reduce, got {} calls", llm.calls());
         assert!(!summary.degraded);
-        assert!(!summary.headline.is_empty());
+        assert_ne!(summary.headline, "");
     }
 }

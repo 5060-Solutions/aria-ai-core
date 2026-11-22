@@ -185,7 +185,7 @@ mod tests {
         let m = MockTranscriber::new();
         let quiet = vec![0.0_f32; 16_000];
         let out = m.transcribe(&req(&quiet, Speaker::Local)).expect("ok");
-        assert!(out.utterances.is_empty());
+        assert_eq!(out.utterances, []);
         assert_eq!(out.language, "en");
         assert_eq!(m.calls(), 1);
     }
@@ -194,7 +194,7 @@ mod tests {
     fn empty_audio_is_not_an_error() {
         let m = MockTranscriber::new();
         let out = m.transcribe(&req(&[], Speaker::Remote)).expect("ok");
-        assert!(out.utterances.is_empty());
+        assert_eq!(out.utterances, []);
     }
 
     #[test]
@@ -204,7 +204,7 @@ mod tests {
         let a = m.transcribe(&req(&audio, Speaker::Local)).expect("ok");
         let b = m.transcribe(&req(&audio, Speaker::Local)).expect("ok");
         assert_eq!(a, b);
-        assert!(!a.utterances.is_empty());
+        assert_ne!(a.utterances, []);
     }
 
     #[test]
@@ -230,7 +230,7 @@ mod tests {
             "second line"
         );
         let third = m.transcribe(&req(&audio, Speaker::Local)).expect("ok");
-        assert!(!third.utterances[0].text.is_empty());
+        assert_ne!(third.utterances[0].text, "");
     }
 
     #[test]

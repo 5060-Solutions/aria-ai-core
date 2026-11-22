@@ -306,13 +306,13 @@ mod tests {
             hangover_ms: 0,
             ..VadConfig::default()
         };
-        assert!(detect_speech(&audio, RATE, &cfg).is_empty());
+        assert_eq!(detect_speech(&audio, RATE, &cfg), []);
     }
 
     #[test]
     fn empty_or_degenerate_input_is_handled() {
-        assert!(detect_speech(&[], RATE, &VadConfig::default()).is_empty());
-        assert!(detect_speech(&silence(100), 0, &VadConfig::default()).is_empty());
+        assert_eq!(detect_speech(&[], RATE, &VadConfig::default()), []);
+        assert_eq!(detect_speech(&silence(100), 0, &VadConfig::default()), []);
         let weird = VadConfig {
             frame_ms: 0,
             noise_quantile: 5.0,
