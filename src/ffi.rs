@@ -402,10 +402,10 @@ mod tests {
     fn the_facade_exposes_the_catalogue_and_an_empty_store() {
         let dir = tempfile::tempdir().expect("tempdir");
         let ai = engine(&dir);
-        assert!(!ai.availability().is_empty());
-        assert!(ai.installed_models().is_empty());
+        assert_ne!(ai.availability(), []);
+        assert_eq!(ai.installed_models(), []);
         assert_eq!(ai.storage_bytes(), 0);
-        assert!(ai.open_calls().is_empty());
+        assert_eq!(ai.open_calls(), [] as [String; 0]);
     }
 
     #[test]
@@ -431,7 +431,7 @@ mod tests {
         assert!(matches!(call.status(), InsightStatus::Pending));
 
         ai.forget_call("call-1".to_string());
-        assert!(ai.open_calls().is_empty());
+        assert_eq!(ai.open_calls(), [] as [String; 0]);
     }
 
     #[test]

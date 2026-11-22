@@ -391,7 +391,7 @@ mod tests {
     fn the_bundled_catalog_parses_and_validates() {
         let c = Catalog::bundled().expect("bundled catalog must parse");
         assert!(c.catalog_version >= 1);
-        assert!(!c.models.is_empty());
+        assert_ne!(c.models, []);
         assert!(c.get("whisper-base-q5_1").is_ok());
         assert!(matches!(
             c.get("nope"),

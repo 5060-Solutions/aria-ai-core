@@ -513,7 +513,7 @@ mod tests {
             .with_context(4_096);
         let out = summarize(&t, &m, &ctx(), &SummaryConfig::default()).expect("summary");
         assert!(out.retries >= 1);
-        assert!(!out.summary.headline.is_empty());
+        assert_ne!(out.summary.headline, "");
     }
 
     #[test]
@@ -545,8 +545,8 @@ mod tests {
         let out = summarize(&t, &m, &ctx(), &SummaryConfig::default()).expect("summary");
 
         assert!(out.summary.degraded, "a prose fallback must be marked");
-        assert!(out.summary.key_points.is_empty());
-        assert!(out.summary.action_items.is_empty());
+        assert_eq!(out.summary.key_points, [] as [String; 0]);
+        assert_eq!(out.summary.action_items, []);
         assert_eq!(out.summary.headline, "Sarah called to move the review");
         assert!(out.summary.abstract_text.contains("Budget sign-off"));
         assert_eq!(m.calls(), 3, "two structured attempts plus the fallback");
