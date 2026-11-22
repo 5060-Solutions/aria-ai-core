@@ -108,9 +108,9 @@
 
 pub mod audio;
 pub mod engine;
+pub mod error;
 #[cfg(feature = "insights")]
 pub mod insights;
-pub mod error;
 pub mod llm;
 pub mod models;
 pub mod session;

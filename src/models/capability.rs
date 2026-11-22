@@ -131,7 +131,11 @@ impl DeviceCapability {
     /// that is what makes the device hot and the UI stutter (design spec §7.3).
     #[must_use]
     pub const fn inference_threads(&self) -> u32 {
-        let cores = if self.cpu_cores == 0 { 2 } else { self.cpu_cores };
+        let cores = if self.cpu_cores == 0 {
+            2
+        } else {
+            self.cpu_cores
+        };
         if self.platform.is_desktop() {
             if cores > 2 {
                 cores - 2
@@ -171,12 +175,18 @@ mod tests {
 
     #[test]
     fn tier_boundaries_match_the_spec_table() {
-        assert_eq!(dev(2_048, true, Platform::Ios).tier(), DeviceTier::Unsupported);
+        assert_eq!(
+            dev(2_048, true, Platform::Ios).tier(),
+            DeviceTier::Unsupported
+        );
         assert_eq!(dev(3_072, true, Platform::Ios).tier(), DeviceTier::Low);
         assert_eq!(dev(6_143, true, Platform::Ios).tier(), DeviceTier::Low);
         assert_eq!(dev(6_144, true, Platform::Ios).tier(), DeviceTier::Medium);
         assert_eq!(dev(8_192, true, Platform::Ios).tier(), DeviceTier::High);
-        assert_eq!(dev(8_192, true, Platform::MacOs).tier(), DeviceTier::Desktop);
+        assert_eq!(
+            dev(8_192, true, Platform::MacOs).tier(),
+            DeviceTier::Desktop
+        );
         // A small desktop still gets mobile-grade gating.
         assert_eq!(dev(6_144, true, Platform::Linux).tier(), DeviceTier::Medium);
     }

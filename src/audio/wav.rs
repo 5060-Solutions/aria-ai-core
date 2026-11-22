@@ -105,7 +105,6 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
-
     /// Build a minimal PCM WAV. Test-only, so a length that does not fit a
     /// u32 is a broken test rather than a case to handle.
     fn wav(channels: u16, rate: u32, samples: &[i16]) -> Vec<u8> {
@@ -158,10 +157,7 @@ mod tests {
     fn a_wav_with_an_extra_chunk_before_data_is_still_read() {
         // Real recorders emit LIST/INFO between fmt and data.
         let mut v = wav(1, 8000, &[7_i16, 8, 9]);
-        let data_at = v
-            .windows(4)
-            .position(|w| w == b"data")
-            .expect("data chunk");
+        let data_at = v.windows(4).position(|w| w == b"data").expect("data chunk");
         let extra: Vec<u8> = b"LIST\x04\x00\x00\x00INFO".to_vec();
         v.splice(data_at..data_at, extra.iter().copied());
         let riff_len = u32::try_from(v.len() - 8).expect("fits a u32");

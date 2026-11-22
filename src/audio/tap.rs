@@ -121,10 +121,7 @@ impl Leg {
         }
 
         let mut st = lock(&self.state);
-        let needs_new = st
-            .resampler
-            .as_ref()
-            .is_none_or(|r| r.input_rate() != rate);
+        let needs_new = st.resampler.as_ref().is_none_or(|r| r.input_rate() != rate);
         if needs_new {
             // Codec renegotiated mid-call: flush the old filter, start a new one.
             if let Some(old) = st.resampler.as_mut() {
@@ -183,9 +180,11 @@ impl CallAudioTap {
     #[must_use]
     pub fn new(cfg: &TapConfig) -> Self {
         let ring_ms = cfg.ring_ms.clamp(100, 30_000);
-        let max_samples =
-            ms_to_samples(u64::from(cfg.max_capture_secs).saturating_mul(1_000), TARGET_RATE_HZ)
-                .max(TARGET_RATE_HZ as usize);
+        let max_samples = ms_to_samples(
+            u64::from(cfg.max_capture_secs).saturating_mul(1_000),
+            TARGET_RATE_HZ,
+        )
+        .max(TARGET_RATE_HZ as usize);
         Self {
             local: Leg::new(ring_ms),
             remote: Leg::new(ring_ms),
@@ -382,7 +381,11 @@ mod tests {
         }
         tap.seal().expect("seal");
         let cap = tap.take_capture().expect("capture");
-        assert!(cap.remote.len().abs_diff(16_000) <= 8, "{}", cap.remote.len());
+        assert!(
+            cap.remote.len().abs_diff(16_000) <= 8,
+            "{}",
+            cap.remote.len()
+        );
         assert!(!cap.narrowband, "48k Opus must not be flagged narrowband");
     }
 
@@ -416,7 +419,11 @@ mod tests {
         assert_eq!(segs.len(), 2, "{segs:?}");
         assert_eq!(segs[0].speaker, crate::types::Speaker::Local);
         assert_eq!(segs[1].speaker, crate::types::Speaker::Remote);
-        assert!(segs[1].start_ms >= 400, "remote turn at {}", segs[1].start_ms);
+        assert!(
+            segs[1].start_ms >= 400,
+            "remote turn at {}",
+            segs[1].start_ms
+        );
     }
 
     #[test]
@@ -504,7 +511,11 @@ mod tests {
         tap.seal().expect("seal");
         let cap = tap.take_capture().expect("capture");
         // ~800 ms of 16 kHz audio.
-        assert!(cap.local.len().abs_diff(12_800) <= 64, "{}", cap.local.len());
+        assert!(
+            cap.local.len().abs_diff(12_800) <= 64,
+            "{}",
+            cap.local.len()
+        );
         assert_eq!(cap.local_stats.source_rate_hz, 48_000);
     }
 

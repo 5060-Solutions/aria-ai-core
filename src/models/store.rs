@@ -163,7 +163,8 @@ impl ModelStore {
     /// Where one member of a multi-file model lives.
     #[must_use]
     pub fn member_path(&self, model: &ModelDescriptor, file: &ModelFile) -> PathBuf {
-        self.path_for(model).join(sanitize_file_name(&file.file_name))
+        self.path_for(model)
+            .join(sanitize_file_name(&file.file_name))
     }
 
     /// Where one member's in-progress download lives.
@@ -500,8 +501,8 @@ fn dir_size(dir: &Path) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::catalog::{ModelKind, ModelRuntime};
     use crate::models::capability::DeviceTier;
+    use crate::models::catalog::{ModelKind, ModelRuntime};
 
     fn descriptor(id: &str, size: u64, sha: &str) -> ModelDescriptor {
         ModelDescriptor {
@@ -527,8 +528,8 @@ mod tests {
 
     fn store() -> (tempfile::TempDir, ModelStore) {
         let dir = tempfile::tempdir().expect("tempdir");
-        let s = ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(u64::MAX)))
-            .expect("store");
+        let s =
+            ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(u64::MAX))).expect("store");
         (dir, s)
     }
 
@@ -549,7 +550,10 @@ mod tests {
     fn paths_are_derived_from_the_catalogue_not_guessed() {
         let (_d, s) = store();
         let m = descriptor("m1", 10, "aa");
-        assert_eq!(s.path_for(&m).file_name().and_then(|n| n.to_str()), Some("m1.bin"));
+        assert_eq!(
+            s.path_for(&m).file_name().and_then(|n| n.to_str()),
+            Some("m1.bin")
+        );
         assert_eq!(
             s.part_path_for(&m).file_name().and_then(|n| n.to_str()),
             Some("m1.part")
@@ -617,8 +621,8 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let m = descriptor("m1", 1_000_000, "aa");
 
-        let tight = ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(1_100_000)))
-            .expect("store");
+        let tight =
+            ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(1_100_000))).expect("store");
         match tight.preflight(&m) {
             Err(AiError::InsufficientSpace { needed_bytes, .. }) => {
                 assert_eq!(needed_bytes, 1_200_000);
@@ -626,16 +630,16 @@ mod tests {
             other => panic!("expected InsufficientSpace, got {other:?}"),
         }
 
-        let roomy = ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(1_200_000)))
-            .expect("store");
+        let roomy =
+            ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(1_200_000))).expect("store");
         roomy.preflight(&m).expect("enough room");
     }
 
     #[test]
     fn preflight_credits_bytes_already_downloaded() {
         let dir = tempfile::tempdir().expect("tempdir");
-        let s = ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(300_000)))
-            .expect("store");
+        let s =
+            ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(300_000))).expect("store");
         let m = descriptor("m1", 1_000_000, "aa");
         assert!(s.preflight(&m).is_err());
 
@@ -650,7 +654,11 @@ mod tests {
         fs::write(s.part_path_for(&m), b"partial").expect("write");
         fs::write(s.tmp_dir().join("notapart.txt"), b"x").expect("write");
 
-        assert_eq!(s.cleanup_stale_parts(Duration::from_hours(1)).expect("clean"), 0);
+        assert_eq!(
+            s.cleanup_stale_parts(Duration::from_hours(1))
+                .expect("clean"),
+            0
+        );
         assert!(s.part_path_for(&m).exists());
 
         assert_eq!(s.cleanup_stale_parts(Duration::ZERO).expect("clean"), 1);
@@ -695,7 +703,9 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let path = dir.path().join("blob");
         // Bigger than one hash chunk, to exercise the streaming loop.
-        let body: Vec<u8> = (0..(HASH_CHUNK * 2 + 17)).map(|i| (i % 251) as u8).collect();
+        let body: Vec<u8> = (0..(HASH_CHUNK * 2 + 17))
+            .map(|i| (i % 251) as u8)
+            .collect();
         fs::write(&path, &body).expect("write");
         assert_eq!(sha256_file(&path).expect("hash"), sha256_bytes(&body));
     }

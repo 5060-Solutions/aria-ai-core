@@ -40,9 +40,12 @@ fn synthesise(dir: &Path, rate: u32) -> Option<PathBuf> {
     }
     let converted = Command::new("afconvert")
         .args([
-            "-f", "WAVE",
-            "-d", &format!("LEI16@{rate}"),
-            "-c", "1",
+            "-f",
+            "WAVE",
+            "-d",
+            &format!("LEI16@{rate}"),
+            "-c",
+            "1",
             aiff.to_str()?,
             wav_path.to_str()?,
         ])
@@ -108,7 +111,10 @@ fn real_speech_produces_a_non_empty_transcript() {
             "expected {word:?} somewhere in {text:?}"
         );
     }
-    assert_eq!(out.language, "en", "English speech should detect as English");
+    assert_eq!(
+        out.language, "en",
+        "English speech should detect as English"
+    );
 }
 
 /// A call is carried at 8 kHz, so the narrowband path is the one that actually

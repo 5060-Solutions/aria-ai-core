@@ -114,8 +114,8 @@ impl Transcriber for MockTranscriber {
             return Ok(TranscribeOutput::empty(language));
         }
 
-        let duration_ms = u32::try_from(samples_to_ms(req.samples.len(), req.sample_rate))
-            .unwrap_or(u32::MAX);
+        let duration_ms =
+            u32::try_from(samples_to_ms(req.samples.len(), req.sample_rate)).unwrap_or(u32::MAX);
 
         let text = lock(&self.script)
             .pop_front()
@@ -155,7 +155,11 @@ fn synthetic_text(req: &TranscribeRequest<'_>, duration_ms: u32) -> String {
         let idx = ((hash >> ((i % 8) * 8)) as usize) % WORDS.len();
         out.push(WORDS[idx]);
     }
-    format!("{} {}", req.speaker.prompt_label().to_lowercase(), out.join(" "))
+    format!(
+        "{} {}",
+        req.speaker.prompt_label().to_lowercase(),
+        out.join(" ")
+    )
 }
 
 #[cfg(test)]
@@ -166,9 +170,7 @@ mod tests {
     fn tone(ms: u32, amp: f32) -> Vec<f32> {
         let n = crate::util::ms_to_samples(u64::from(ms), 16_000);
         #[allow(clippy::cast_precision_loss)]
-        (0..n)
-            .map(|i| amp * (i as f32 * 0.05).sin())
-            .collect()
+        (0..n).map(|i| amp * (i as f32 * 0.05).sin()).collect()
     }
 
     fn req(samples: &[f32], speaker: Speaker) -> TranscribeRequest<'_> {
@@ -222,11 +224,17 @@ mod tests {
         let m = MockTranscriber::scripted(["first line", "second line"]);
         let audio = tone(1_000, 0.5);
         assert_eq!(
-            m.transcribe(&req(&audio, Speaker::Local)).expect("ok").utterances[0].text,
+            m.transcribe(&req(&audio, Speaker::Local))
+                .expect("ok")
+                .utterances[0]
+                .text,
             "first line"
         );
         assert_eq!(
-            m.transcribe(&req(&audio, Speaker::Remote)).expect("ok").utterances[0].text,
+            m.transcribe(&req(&audio, Speaker::Remote))
+                .expect("ok")
+                .utterances[0]
+                .text,
             "second line"
         );
         let third = m.transcribe(&req(&audio, Speaker::Local)).expect("ok");
@@ -238,7 +246,9 @@ mod tests {
         let m = MockTranscriber::scripted(["only line"]);
         let quiet = vec![0.0_f32; 16_000];
         m.transcribe(&req(&quiet, Speaker::Local)).expect("ok");
-        let out = m.transcribe(&req(&tone(500, 0.5), Speaker::Local)).expect("ok");
+        let out = m
+            .transcribe(&req(&tone(500, 0.5), Speaker::Local))
+            .expect("ok");
         assert_eq!(out.utterances[0].text, "only line");
     }
 

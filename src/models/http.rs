@@ -90,9 +90,8 @@ impl ModelSource for HttpModelSource {
             break;
         }
 
-        let resp = resp.ok_or_else(|| {
-            AiError::Download(format!("more than {MAX_REDIRECTS} redirects"))
-        })?;
+        let resp =
+            resp.ok_or_else(|| AiError::Download(format!("more than {MAX_REDIRECTS} redirects")))?;
 
         let status = resp.status();
         if !status.is_success() {

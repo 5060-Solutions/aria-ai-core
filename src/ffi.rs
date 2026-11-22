@@ -182,7 +182,9 @@ impl AriaAi {
     /// The session for a call, if one is open.
     #[must_use]
     pub fn call(&self, call_id: String) -> Option<Arc<AriaCall>> {
-        self.inner.session(&call_id).map(|s| Arc::new(AriaCall::wrap(s)))
+        self.inner
+            .session(&call_id)
+            .map(|s| Arc::new(AriaCall::wrap(s)))
     }
 
     /// Seal a call's capture. Idempotent.
@@ -245,10 +247,12 @@ impl AriaAi {
 
 impl AriaAi {
     fn session_or_err(&self, call_id: &str) -> std::result::Result<Arc<CallSession>, AiError> {
-        self.inner.session(call_id).ok_or_else(|| AiError::InvalidState {
-            expected: "an open session".to_string(),
-            actual: format!("no session for call {call_id}"),
-        })
+        self.inner
+            .session(call_id)
+            .ok_or_else(|| AiError::InvalidState {
+                expected: "an open session".to_string(),
+                actual: format!("no session for call {call_id}"),
+            })
     }
 }
 
@@ -304,11 +308,7 @@ impl AriaCall {
     ///
     /// # Errors
     /// As [`CallSession::push_local`].
-    pub fn push_local(
-        &self,
-        samples: Vec<i16>,
-        rate_hz: u32,
-    ) -> std::result::Result<(), AiError> {
+    pub fn push_local(&self, samples: Vec<i16>, rate_hz: u32) -> std::result::Result<(), AiError> {
         self.session.push_local(&samples, rate_hz)
     }
 
@@ -316,11 +316,7 @@ impl AriaCall {
     ///
     /// # Errors
     /// As [`CallSession::push_remote`].
-    pub fn push_remote(
-        &self,
-        samples: Vec<i16>,
-        rate_hz: u32,
-    ) -> std::result::Result<(), AiError> {
+    pub fn push_remote(&self, samples: Vec<i16>, rate_hz: u32) -> std::result::Result<(), AiError> {
         self.session.push_remote(&samples, rate_hz)
     }
 

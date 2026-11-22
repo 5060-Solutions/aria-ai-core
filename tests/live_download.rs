@@ -20,8 +20,8 @@ use aria_ai_core::models::http::HttpModelSource;
 use aria_ai_core::models::store::{FixedDiskSpace, ModelStore};
 
 fn downloader(dir: &tempfile::TempDir) -> Downloader {
-    let store = ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(u64::MAX)))
-        .expect("store");
+    let store =
+        ModelStore::with_probe(dir.path(), Arc::new(FixedDiskSpace(u64::MAX))).expect("store");
     let source = Arc::new(HttpModelSource::new("aria-ai-core/live-test").expect("client"));
     Downloader::new(store, source)
 }
@@ -50,7 +50,9 @@ fn the_smallest_catalogue_model_really_downloads_and_verifies() {
     assert_eq!(size, model.size_bytes, "catalogue size is wrong");
 
     // The digest in catalog.json is the one the CDN actually serves.
-    dl.store().verify(model).expect("catalogue digest matches the served bytes");
+    dl.store()
+        .verify(model)
+        .expect("catalogue digest matches the served bytes");
 
     assert_eq!(states.last(), Some(&DownloadState::Completed));
     println!("downloaded {size} bytes, digest verified");

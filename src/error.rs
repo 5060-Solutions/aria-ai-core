@@ -96,10 +96,7 @@ pub enum AiError {
 
     /// Too little speech to summarize honestly (see design spec §4.4 "floor").
     #[error("transcript has only {speech_secs}s of speech; minimum is {minimum_secs}s")]
-    TranscriptTooShort {
-        speech_secs: u32,
-        minimum_secs: u32,
-    },
+    TranscriptTooShort { speech_secs: u32, minimum_secs: u32 },
 
     /// The requested capability is compiled out.
     #[error("feature `{0}` is not enabled in this build")]

@@ -293,7 +293,12 @@ mod tests {
 
     #[test]
     fn two_silent_legs_produce_nothing() {
-        let segs = segment_call(&silence(5_000), &silence(5_000), RATE, &SegmentationConfig::default());
+        let segs = segment_call(
+            &silence(5_000),
+            &silence(5_000),
+            RATE,
+            &SegmentationConfig::default(),
+        );
         assert_eq!(segs, []);
     }
 }
