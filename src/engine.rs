@@ -452,7 +452,7 @@ mod tests {
         assert!(dir.path().join("models").is_dir());
         assert!(dir.path().join("tmp").is_dir());
         assert_eq!(e.storage_bytes(), 0);
-        assert!(e.installed_models().is_empty());
+        assert_eq!(e.installed_models(), []);
     }
 
     #[test]
@@ -598,7 +598,7 @@ mod tests {
         assert!(ended.is_stopped());
 
         e.forget_call("call-a");
-        assert!(e.open_calls().is_empty());
+        assert_eq!(e.open_calls(), [] as [String; 0]);
         assert!(e.session("call-a").is_none());
     }
 
@@ -649,7 +649,7 @@ mod tests {
         let transcript = session
             .transcribe(&MockTranscriber::new())
             .expect("transcribe");
-        assert!(!transcript.segments.is_empty());
+        assert_ne!(transcript.segments, []);
         assert!(transcript
             .segments
             .iter()

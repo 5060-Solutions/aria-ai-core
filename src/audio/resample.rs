@@ -532,7 +532,7 @@ mod tests {
         let mut r = SincResampler::new(8_000, 16_000).expect("build");
         let mut out = Vec::new();
         r.process_i16(&[], &mut out);
-        assert!(out.is_empty());
+        assert_eq!(out, [] as [f32; 0]);
         r.flush(&mut out);
         // Flushing an empty stream emits only the zero tail, which is silence.
         assert!(out.iter().all(|s| s.abs() < 1e-6));

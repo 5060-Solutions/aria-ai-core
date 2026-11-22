@@ -313,7 +313,7 @@ mod tests {
 
     #[test]
     fn an_empty_transcript_plans_nothing() {
-        assert!(plan_windows(&[], &ChunkConfig::default()).is_empty());
+        assert_eq!(plan_windows(&[], &ChunkConfig::default()), []);
     }
 
     #[test]
@@ -421,7 +421,7 @@ mod tests {
         let cfg = ChunkConfig::default();
         let windows = plan_windows(&segs, &cfg);
 
-        assert!(!windows.is_empty());
+        assert_ne!(windows, []);
         assert!(windows.len() < 20, "suspicious window count");
         let giant = windows
             .iter()
@@ -443,7 +443,7 @@ mod tests {
         assert!(cfg.single_pass_budget() > 0);
         assert!(cfg.effective_window_tokens() >= 128);
         let windows = plan_windows(&segs, &cfg);
-        assert!(!windows.is_empty());
+        assert_ne!(windows, []);
         assert!(windows.windows(2).all(|p| p[1].start_index > p[0].start_index));
     }
 
@@ -460,8 +460,8 @@ mod tests {
     fn head_and_tail_pick_the_greeting_and_the_close() {
         let segs = conversation(60, 10, 5_000); // 0 .. ~297 s
         let (head, tail) = head_and_tail(&segs, 60);
-        assert!(!head.is_empty());
-        assert!(!tail.is_empty());
+        assert_ne!(head, []);
+        assert_ne!(tail, []);
         assert_eq!(head.first().map(|s| s.start_ms), Some(0));
         assert_eq!(
             tail.last().map(|s| s.end_ms),
@@ -476,7 +476,7 @@ mod tests {
         let segs = conversation(3, 10, 2_000);
         let (head, tail) = head_and_tail(&segs, 600);
         assert_eq!(head.len(), 3);
-        assert!(tail.is_empty());
+        assert_eq!(tail, []);
     }
 
     #[test]

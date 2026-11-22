@@ -284,8 +284,13 @@ impl InsightStore {
     /// [`AiError::Internal`] if the query fails.
     pub fn count(&self) -> Result<u64> {
         let conn = crate::util::lock(&self.conn);
-        conn.query_row("SELECT COUNT(*) FROM insights", [], |r| r.get(0))
-            .map_err(|e| AiError::Internal(format!("count insights: {e}")))
+        // SQLite integers are i64, and rusqlite no longer reads them straight
+        // into a u64. COUNT(*) is never negative, so the conversion only fails
+        // on a corrupt result.
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM insights", [], |r| r.get(0))
+            .map_err(|e| AiError::Internal(format!("count insights: {e}")))?;
+        u64::try_from(n).map_err(|e| AiError::Internal(format!("count insights: {e}")))
     }
 
     /// Delete one insight. `false` if there was nothing to delete.

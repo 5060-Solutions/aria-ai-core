@@ -230,7 +230,7 @@ mod tests {
 
         let cfg = SegmentationConfig::default();
         // Sanity: the leaked signal is loud enough that VAD alone would take it.
-        assert!(!detect_speech(&local, RATE, &cfg.vad).is_empty());
+        assert_ne!(detect_speech(&local, RATE, &cfg.vad), []);
 
         let segs = segment_call(&local, &remote, RATE, &cfg);
         // Both halves matter: the echo must go *and* the real speech must
@@ -285,15 +285,15 @@ mod tests {
         let buf = vec![1.0_f32; samples(100)];
         assert_eq!(slice_ms(&buf, RATE, 0, 50).len(), samples(50));
         assert_eq!(slice_ms(&buf, RATE, 90, 5_000).len(), samples(10));
-        assert!(slice_ms(&buf, RATE, 500, 600).is_empty());
-        assert!(slice_ms(&buf, RATE, 50, 50).is_empty());
-        assert!(slice_ms(&buf, 0, 0, 50).is_empty());
-        assert!(slice_ms(&[], RATE, 0, 50).is_empty());
+        assert_eq!(slice_ms(&buf, RATE, 500, 600), [] as [f32; 0]);
+        assert_eq!(slice_ms(&buf, RATE, 50, 50), [] as [f32; 0]);
+        assert_eq!(slice_ms(&buf, 0, 0, 50), [] as [f32; 0]);
+        assert_eq!(slice_ms(&[], RATE, 0, 50), [] as [f32; 0]);
     }
 
     #[test]
     fn two_silent_legs_produce_nothing() {
         let segs = segment_call(&silence(5_000), &silence(5_000), RATE, &SegmentationConfig::default());
-        assert!(segs.is_empty());
+        assert_eq!(segs, []);
     }
 }

@@ -367,7 +367,7 @@ mod tests {
 
         assert_eq!(cap.rate_hz, 16_000);
         assert!(cap.local.len().abs_diff(16_000) <= 8, "{}", cap.local.len());
-        assert!(cap.remote.is_empty());
+        assert_eq!(cap.remote, [] as [f32; 0]);
         assert!(cap.narrowband);
         assert!(!cap.truncated);
         assert!(!cap.lost_audio());
@@ -487,7 +487,7 @@ mod tests {
         assert!(cap.local_stats.ring.dropped_samples > 0);
         // What survived is the tail: ring depth at 48 kHz sizing, so all of
         // the last 200 ms at least.
-        assert!(!cap.local.is_empty());
+        assert_ne!(cap.local, [] as [f32; 0]);
     }
 
     #[test]

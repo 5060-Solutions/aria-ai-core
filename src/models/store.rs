@@ -680,7 +680,7 @@ mod tests {
     fn installed_lists_only_what_is_really_there() {
         let (_d, s) = store();
         let catalog = Catalog::bundled().expect("catalog");
-        assert!(s.installed(catalog).is_empty());
+        assert_eq!(s.installed(catalog), []);
 
         let m = catalog.get("whisper-tiny-q5_1").expect("model");
         fs::write(s.path_for(m), b"weights").expect("write");

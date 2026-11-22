@@ -272,7 +272,7 @@ mod tests {
         // Draining an empty ring is an underrun, not a panic.
         out.clear();
         assert_eq!(r.drain_into(&mut out, 10), 0);
-        assert!(out.is_empty());
+        assert_eq!(out, [] as [i16; 0]);
         assert_eq!(r.stats().underruns, 2);
     }
 
@@ -332,6 +332,6 @@ mod tests {
         // Whatever survived must be strictly increasing: drop-oldest removes
         // a prefix, it never reorders.
         assert!(seen.windows(2).all(|w| w[1] > w[0]));
-        assert!(!seen.is_empty());
+        assert_ne!(seen, [] as [i16; 0]);
     }
 }
