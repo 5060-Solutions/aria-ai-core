@@ -34,10 +34,10 @@ jobs:
     steps:
       # Checked out into a subdirectory because [patch.crates-io] resolves the
       # patched -sys crates at ../vendor, relative to this crate.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: aria-ai-core
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: 5060-Solutions/aria-vendor
           path: vendor
@@ -74,10 +74,10 @@ jobs:
     # these backends is macOS, iOS or Android, and none is Linux.
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: aria-ai-core
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: 5060-Solutions/aria-vendor
           path: vendor
@@ -130,10 +130,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: aria-ai-core
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: 5060-Solutions/aria-vendor
           path: vendor
@@ -156,10 +156,10 @@ jobs:
     name: Dependency audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: aria-ai-core
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: 5060-Solutions/aria-vendor
           path: vendor
