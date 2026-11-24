@@ -34,7 +34,6 @@ use std::sync::Mutex;
 
 use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::{Aes256Gcm, Nonce};
-use rand::RngCore;
 use rusqlite::{Connection, OptionalExtension};
 
 use crate::error::{AiError, Result};
@@ -153,14 +152,14 @@ impl InsightStore {
             .map_err(|e| AiError::Internal(format!("serialize insight: {e}")))?;
 
         let mut nonce_bytes = [0_u8; NONCE_LEN];
-        rand::thread_rng().fill_bytes(&mut nonce_bytes);
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        rand::fill(&mut nonce_bytes);
+        let nonce = Nonce::from(nonce_bytes);
 
         let aad = Self::aad(&insight.call_id);
         let sealed = self
             .cipher
             .encrypt(
-                nonce,
+                &nonce,
                 Payload {
                     msg: &plaintext,
                     aad: &aad,
@@ -230,10 +229,12 @@ impl InsightStore {
             )));
         }
 
+        let nonce = Nonce::try_from(nonce_bytes.as_slice())
+            .map_err(|_| AiError::Internal(format!("insight {call_id} has a malformed nonce")))?;
         let plaintext = self
             .cipher
             .decrypt(
-                Nonce::from_slice(&nonce_bytes),
+                &nonce,
                 Payload {
                     msg: &sealed,
                     aad: &Self::aad(call_id),

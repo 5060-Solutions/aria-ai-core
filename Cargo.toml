@@ -62,23 +62,26 @@ stt-whisper-with-llm = [
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
-sha2 = "0.10"
+sha2 = "0.11"
 log = "0.4"
 
 # Optional host-integration deps.
-reqwest = { version = "0.12", default-features = false, features = [
+# `rustls` is reqwest 0.13's only TLS stack here (it verifies through
+# rustls-platform-verifier, i.e. the OS trust store); no default features, so
+# no HTTP/2, charset or system-proxy code comes along for a model download.
+reqwest = { version = "0.13", default-features = false, features = [
     "blocking",
-    "rustls-tls",
+    "rustls",
 ], optional = true }
-fs4 = { version = "1", optional = true }
+fs4 = { version = "1.1", optional = true }
 # `bundled` so the schema does not depend on whatever SQLite the OS ships.
-rusqlite = { version = "0.41", features = ["bundled"], optional = true }
-aes-gcm = { version = "0.10", optional = true }
-rand = { version = "0.8", optional = true }
+rusqlite = { version = "0.43", features = ["bundled"], optional = true }
+aes-gcm = { version = "0.11", optional = true }
+rand = { version = "0.10", optional = true }
 uniffi = { version = "0.28", features = ["cli"], optional = true }
 
 # Optional inference deps. `llama-cpp-2` explicitly does not follow semver —
-# pin it exactly (see docs/superpowers/specs/2026-07-28-on-device-model-research.md §5.4).
+# pin it exactly (see docs/on-device-model-research.md §5.4).
 sherpa-rs = { version = "0.6", optional = true }
 whisper-rs = { version = "0.16", optional = true }
 # Depended on directly only to reach its `system-ggml` feature; whisper-rs pulls
