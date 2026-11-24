@@ -40,7 +40,6 @@ impl HttpModelSource {
     pub fn new(user_agent: impl Into<String>) -> Result<Self> {
         let user_agent = user_agent.into();
         let client = reqwest::blocking::Client::builder()
-            .use_rustls_tls()
             .https_only(true)
             // Followed manually in `open` so every hop is allowlist-checked;
             // the library must never follow one on our behalf.

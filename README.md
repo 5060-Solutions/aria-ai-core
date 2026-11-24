@@ -8,7 +8,9 @@ model downloader, and it is restricted to a compile-time host allowlist
 (`models::ALLOWED_HOSTS`). No call audio, transcript or summary ever leaves the
 device through this crate.
 
-Implements Phase 1 of `docs/superpowers/specs/2026-07-28-on-device-ai-design.md`.
+Implements the first phase of the on-device AI design in
+[`docs/on-device-ai-design.md`](docs/on-device-ai-design.md); the table under
+"Deferred to later phases" is what the later phases hold.
 
 ## What it does
 
